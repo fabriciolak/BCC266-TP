@@ -53,7 +53,7 @@ void set_ram(RAM *ram, size_t memory_address, int new_memory_value) {
   ram->memory[memory_address] = new_memory_value;
 }
 
-int* get_ram(RAM *ram, int memory_address) {
+int get_ram(RAM *ram, int memory_address) {
   if (ram == NULL) {
     puts("memory with error");
     exit(1);
@@ -63,7 +63,7 @@ int* get_ram(RAM *ram, int memory_address) {
     printf("Error: address %d out of bounds (max: %zu)", memory_address, ram->size);
   }
 
-  return &ram->memory[memory_address];
+  return ram->memory[memory_address];
 }
 
 /*

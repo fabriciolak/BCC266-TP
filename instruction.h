@@ -11,9 +11,12 @@ typedef struct Instruction {
 // TODO: Change the definition of Register later
 
 typedef struct Register {
-  int PC;  // Program Counter
+  int PC;  // Program Counte
   int AC;  // Acumulator
   int IR;  // Instruction Register
+
+  int R1;
+  int R2;
 } Register;
 
 #endif // INSTRUCTION_H

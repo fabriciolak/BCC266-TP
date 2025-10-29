@@ -1,13 +1,9 @@
 #ifndef CPU_H
 #define CPU_H
 
+#include "instruction.h"
 #include "ram.h"
 
-// CPU
-typedef struct CPU {
-  Registers regs;
-  RAM *ram;       // pointer to RAM
-  int state;      // running, stoped, etc
-} CPU;
+void execute_cpu(Register *reg, RAM *ram);
 
 #endif
