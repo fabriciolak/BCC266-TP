@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "ram.h"
 
 RAM* create_ram(size_t size) {
@@ -22,8 +23,10 @@ RAM* create_empty_ram(size_t size) {
 }
 
 RAM* create_random_ram(size_t size) {
-  RAM *ram = create_ram(size);
+  srand(time(NULL));
 
+  RAM *ram = create_ram(size);
+  
   for(size_t i = 0; i < size; i++) {
     ram->memory[i] = rand();
   }

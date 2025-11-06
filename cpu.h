@@ -4,6 +4,6 @@
 #include "instruction.h"
 #include "ram.h"
 
-void execute_cpu(Register *reg, RAM *ram);
+void execute_cpu(Register *reg, RAM *ram, Instruction *memory);
 
 #endif

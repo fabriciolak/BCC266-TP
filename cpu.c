@@ -13,9 +13,9 @@
 */
 
 // segue o principio de: fetch-decode-execute
-Instruction memory[MEMORY_SIZE];
+//Instruction memory[MEMORY_SIZE];
 
-void execute_cpu(Register *reg, RAM *ram) {
+void execute_cpu(Register *reg, RAM *ram, Instruction *memory) {
   // find the instruction from memory using PC
   Instruction inst = memory[reg->PC];
 
