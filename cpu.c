@@ -18,7 +18,8 @@
 void execute_cpu(Register *reg, RAM *ram, Instruction *memory) {
   // find the instruction from memory using PC
   Instruction inst = memory[reg->PC];
-
+  reg->IR = inst.opcode;
+  
   switch (inst.opcode) {
     case HALT:
       puts("program endeed");
