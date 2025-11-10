@@ -93,7 +93,7 @@ void execute_cpu(Register *reg, RAM *ram, Instruction *memory) {
 
       if (which_reg == 1) { 
         reg->R1 = value;
-      } else if (which_reg) {
+      } else if (which_reg == 2) {
         reg->R2 = value;
       }
 
