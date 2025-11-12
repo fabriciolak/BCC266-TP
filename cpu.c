@@ -26,7 +26,6 @@ void execute_cpu(Register* reg, RAM* ram, Instruction* memory) {
   switch (inst.opcode) {
     case HALT:
       puts("program endeed");
-      return;
       break;
     case ADD:
       reg->R1 = get_ram(ram, inst.optr1);
@@ -112,6 +111,29 @@ void execute_cpu(Register* reg, RAM* ram, Instruction* memory) {
       } else if (which_reg == 2) {
         set_ram(ram, address, reg->R2);
       }
+
+      break;
+    }
+    case JUMP: {
+      reg->PC = inst.optr1 - 1;  // sera incrementado no final
+      break;
+    }
+    case JZ: {  // Jump if zero
+      if (reg->AC == 0) {
+        reg->PC = inst.optr1 - 1;
+      }
+      break;
+    }
+    case JNZ: {  // Jump if not zero
+      if (reg->AC != 0) {
+        reg->PC = inst.optr1 - 1;
+      }
+      break;
+    }
+    case JGT: {
+      if (reg->AC > 0) {
+        reg->PC = inst.optr1 - 1;
+      };
 
       break;
     }

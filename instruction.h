@@ -19,4 +19,4 @@ typedef struct Register {
   int R2;
 } Register;
 
-#endif // INSTRUCTION_H
+#endif  // INSTRUCTION_H
