@@ -59,31 +59,15 @@ void program_fibonacci(RAM* ram, Register* reg, int term) {
 void program_sum_matrix(RAM* ram, Register* reg, int size) {
   Instruction inst[MEMORY_SIZE] = {0};
 
-  srand(time(NULL));
-
   int n_elements = size * size;
   int delta = n_elements;
+
+  srand(time(NULL));
 
   for (int i = 0; i < n_elements; i++) {
     set_ram(ram, i, rand() % 100);
     set_ram(ram, delta + i, rand() % 100);
   }
-
-  // printf("Matriz A: ");
-  // for (int i = 0; i < n_elements; i++) {
-  //   int value = rand() % 100;
-  //   set_ram(ram, i, value);
-  //   printf("%d ", value);
-  // }
-  // printf("\n");
-
-  // printf("Matriz B: ");
-  // for (int i = 0; i < n_elements; i++) {
-  //   int value = rand() % 100;
-  //   set_ram(ram, delta + i, value);
-  //   printf("%d ", value);
-  // }
-  // printf("\n");
 
   int pc = 0;
 
@@ -97,10 +81,22 @@ void program_sum_matrix(RAM* ram, Register* reg, int size) {
     execute_cpu(reg, ram, inst);
   }
 
-  printf("Resultado: %dx%d\n", size, size);
-  for (int i = 0; i < n_elements; i++) {
-    printf("C[%d] = %d\n", i, get_ram(ram, 2 * delta + i));
+  printf("Matriz A\n");
+  for (int i = 0; i < size; i++) {
+    for (int j = 0; j < size; j++) {
+      printf("\t%d ", get_ram(ram, i * size + j));
+    }
+    printf("\n");
   }
+  printf("\n");
+  printf("Matriz B\n");
+  for (int i = 0; i < size; i++) {
+    for (int j = 0; j < size; j++) {
+      printf("\t%d ", get_ram(ram, delta + i * size + j));
+    }
+    printf("\n");
+  }
+  printf("\n");
 }
 
 void program_div(RAM* ram, Register* reg, int dividend, int divisor) {
@@ -130,9 +126,9 @@ int main(void) {
   RAM* ram = create_empty_ram(MEMORY_SIZE);
 
   // program_fibonacci(ram, &reg, 10);
-  // program_sum_matrix(ram, &reg, 3);
+  program_sum_matrix(ram, &reg, 3);
   program_div(ram, &reg, 10, 2);
-  printf("Resultado = %d\n", get_ram(ram, 3));
+  // printf("Resultado = %d\n", get_ram(ram, 3));
 
   destroy_ram(ram);
   return 0;
