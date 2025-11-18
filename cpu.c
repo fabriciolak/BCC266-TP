@@ -19,13 +19,13 @@
 // Instruction memory[MEMORY_SIZE];
 
 void execute_cpu(Register* reg, RAM* ram, Instruction* memory) {
-  // find the instruction from memory using PC
+  // encontra a instrução da memoria usando PC
   Instruction inst = memory[reg->PC];
   reg->IR = inst.opcode;
 
-  switch (inst.opcode) {
+  switch (reg->IR) {
     case HALT:
-      // puts("program endeed");
+      puts("program endeed");
       break;
     case ADD:
       reg->R1 = get_ram(ram, inst.optr1);

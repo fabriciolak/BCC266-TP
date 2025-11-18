@@ -154,8 +154,8 @@ int main(void) {
   RAM* ram = create_empty_ram(MEMORY_SIZE);
 
   // PROGRAM: 1
-  // program_mult(ram, &reg, 10, 10);
-  // printf("Resultado = %d\n", get_ram(ram, 0));
+  program_mult(ram, &reg, 10, 10);
+  printf("Resultado = %d\n", get_ram(ram, 0));
 
   // PROGRAM: 2
   // program_fibonacci(ram, &reg, 10);
