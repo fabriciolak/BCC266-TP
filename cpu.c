@@ -66,6 +66,8 @@ void execute_cpu(Register* reg, RAM* ram, Instruction* memory) {
       set_ram(ram, inst.optr3, reg->AC);
 
       break;
+    // carrega um valor do registrador diretamente na ram
+    // (optr1 = reg, optr2 = endereço)
     case COPY_REG_RAM: {
       int which_reg = inst.optr1;  // 1=R1, 2=R2
       int address = inst.optr2;
@@ -78,6 +80,7 @@ void execute_cpu(Register* reg, RAM* ram, Instruction* memory) {
 
       break;
     }
+
     case COPY_RAM_REG: {
       int which_reg = inst.optr1;
       int address = inst.optr2;
@@ -90,6 +93,8 @@ void execute_cpu(Register* reg, RAM* ram, Instruction* memory) {
 
       break;
     }
+    // carrega um valor direto no registrador
+    // (optr1 = 1 ou 2, optr2 = valor)
     case COPY_EXT_REG: {
       int which_reg = inst.optr1;
       int value = inst.optr2;

@@ -11,20 +11,51 @@
 
 #define MEMORY_SIZE 100
 
+/*
+sempre reiniciar os registradores
+usar uma variavel de controle para quando começar o bloco de instructions.
+(principalmente quando usar algum recurso de JUMP)
+
+sempre fazer o reset do estado da CPU antes de executar (AC, IR, PC, R1, R2)
+*/
+
 void program_mult(RAM* ram, Register* reg, int multiplicand, int multiplier) {
   Instruction inst[MEMORY_SIZE] = {0};
+  int pc = 0;
 
-  set_ram(ram, 0, 0);             // resultado
-  set_ram(ram, 1, multiplicand);  // multiplicando
-  set_ram(ram, 2, 0);             // contador = 0
-  set_ram(ram, 3, multiplier);    // multiplier
-  set_ram(ram, 4, 1);             // constante
+  // set_ram(ram, 0, 0);  // resultado
+  inst[pc++] = (Instruction){COPY_EXT_REG, 1, 0, 0};
+  inst[pc++] = (Instruction){COPY_REG_RAM, 1, 0, 0};
 
-  inst[0] = (Instruction){ADD, 2, 4, 2};
-  inst[1] = (Instruction){ADD, 0, 1, 0};
-  inst[2] = (Instruction){SUB, 3, 2, 5};
-  inst[3] = (Instruction){JGT, 0, 0, 0};
-  inst[4] = (Instruction){HALT, 0, 0, 0};
+  // set_ram(ram, 1, multiplicand);  // multiplicando
+  inst[pc++] = (Instruction){COPY_EXT_REG, 1, multiplicand, 0};
+  inst[pc++] = (Instruction){COPY_REG_RAM, 1, 1, 0};
+
+  // set_ram(ram, 2, 0);             // contador = 0
+  inst[pc++] = (Instruction){COPY_EXT_REG, 1, 0, 0};
+  inst[pc++] = (Instruction){COPY_REG_RAM, 1, 2, 0};
+
+  // set_ram(ram, 3, multiplier);    // multiplier
+  inst[pc++] = (Instruction){COPY_EXT_REG, 1, multiplier, 0};
+  inst[pc++] = (Instruction){COPY_REG_RAM, 1, 3, 0};
+
+  // set_ram(ram, 4, 1);             // constante
+  inst[pc++] = (Instruction){COPY_EXT_REG, 1, 1, 0};
+  inst[pc++] = (Instruction){COPY_REG_RAM, 1, 4, 0};
+
+  int loop_start = pc;
+
+  inst[pc++] = (Instruction){ADD, 2, 4, 2};
+  inst[pc++] = (Instruction){ADD, 0, 1, 0};
+  inst[pc++] = (Instruction){SUB, 3, 2, 5};
+  inst[pc++] = (Instruction){JGT, loop_start, 0, 0};
+  inst[pc++] = (Instruction){HALT, 0, 0, 0};
+
+  reg->AC = 0;
+  reg->IR = 0;
+  reg->PC = 0;
+  reg->R1 = 0;
+  reg->R2 = 0;
 
   while (reg->IR != HALT && reg->PC < MEMORY_SIZE) {
     execute_cpu(reg, ram, inst);
@@ -33,23 +64,33 @@ void program_mult(RAM* ram, Register* reg, int multiplicand, int multiplier) {
 
 void program_fibonacci(RAM* ram, Register* reg, int term) {
   Instruction inst[MEMORY_SIZE] = {0};
+  int pc = 0;
 
-  set_ram(ram, 0, 0);     // anterior = 0
-  set_ram(ram, 1, 1);     // atual = 1
-  set_ram(ram, 2, term);  // contador = n
-  set_ram(ram, 3, 1);     // constante
+  // INICIALIZAÇÃO DA RAM (instruções 0-7)
+  inst[pc++] = (Instruction){COPY_EXT_REG, 1, 0, 0};     // R1 = 0
+  inst[pc++] = (Instruction){COPY_REG_RAM, 1, 0, 0};     // RAM[0] = R1
+  inst[pc++] = (Instruction){COPY_EXT_REG, 1, 1, 0};     // R1 = 1
+  inst[pc++] = (Instruction){COPY_REG_RAM, 1, 1, 0};     // RAM[1] = R1
+  inst[pc++] = (Instruction){COPY_EXT_REG, 1, term, 0};  // R1 = term
+  inst[pc++] = (Instruction){COPY_REG_RAM, 1, 2, 0};     // RAM[2] = R1
+  inst[pc++] = (Instruction){COPY_EXT_REG, 1, 1, 0};     // R1 = 1
+  inst[pc++] = (Instruction){COPY_REG_RAM, 1, 3, 0};     // RAM[3] = R1
 
-  // LOOP START
-  inst[0] = (Instruction){ADD, 0, 1, 4};           // proximo = anterior + atual
-  inst[1] = (Instruction){COPY_RAM_REG, 1, 1, 0};  // temp = atual
-  inst[2] = (Instruction){COPY_RAM_REG, 2, 4, 0};  // current = proximo
-  inst[3] = (Instruction){COPY_REG_RAM, 1, 0, 0};  // anterior = temp
-  inst[4] = (Instruction){COPY_REG_RAM, 2, 1, 0};  // anterior = temp
-  inst[5] = (Instruction){SUB, 2, 3, 2};           // --contator
+  // LOOP START (instrução 8)
+  // guarda o índice da instrução onde o bloco do loop começa
+  // para não colocar de modo hardcoded o destino do JUMP
+  int loop_start = pc;
 
-  inst[6] = (Instruction){JGT, 0, 0, 0};
-  // se o contador maior que 0, volta pro loop
-  inst[7] = (Instruction){HALT, 0, 0, 0};
+  inst[pc++] = (Instruction){ADD, 0, 1, 4};  // proximo = anterior + atual
+  inst[pc++] = (Instruction){COPY_RAM_REG, 1, 1, 0};  // R1 = atual
+  inst[pc++] = (Instruction){COPY_RAM_REG, 2, 4, 0};  // R2 = proximo
+  inst[pc++] = (Instruction){COPY_REG_RAM, 1, 0, 0};  // RAM[0] = R1 (anterior)
+  inst[pc++] = (Instruction){COPY_REG_RAM, 2, 1, 0};  // RAM[1] = R2 (atual)
+  inst[pc++] = (Instruction){SUB, 2, 3, 2};           // contador--
+
+  inst[pc++] = (Instruction){JGT, loop_start, 0,
+                             0};  // se contador > 0, volta pro loop_start
+  inst[pc++] = (Instruction){HALT, 0, 0, 0};
 
   while (reg->IR != HALT && reg->PC < MEMORY_SIZE) {
     execute_cpu(reg, ram, inst);
@@ -141,6 +182,9 @@ void program_fat(RAM* ram, Register* reg, int n) {
 
   reg->PC = 0;
   reg->IR = 0;
+  reg->PC = 0;
+  reg->R1 = 0;
+  reg->R2 = 0;
 
   while (reg->IR != HALT && reg->PC < MEMORY_SIZE) {
     execute_cpu(reg, ram, inst);
@@ -158,7 +202,7 @@ int main(void) {
   printf("Resultado = %d\n", get_ram(ram, 0));
 
   // PROGRAM: 2
-  // program_fibonacci(ram, &reg, 10);
+  // program_fibonacci(ram, &reg, 31);
   // printf("Resultado = %d\n", get_ram(ram, 0));
 
   // PROGRAM: 3
@@ -175,3 +219,9 @@ int main(void) {
   destroy_ram(ram);
   return 0;
 }
+
+/*
+  não manipular a RAM diretamente com o set_ram nos programas
+
+
+*/
