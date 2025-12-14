@@ -1,49 +1,34 @@
-# Compilador e flags
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c11 -g
+CFLAGS = -Wall -Wextra -std=c11 -g -Iinclude -I.
 LDFLAGS =
 
-# Nome do executável
-TARGET = exe
+TARGET = bin/exe
+BUILD_DIR = build
+SRC_DIR = src
+INCLUDE_DIR = include
 
-# Arquivos fonte e objetos
-SOURCES = cpu.c program.c ram.c
-OBJECTS = $(SOURCES:.c=.o)
+SOURCES = $(wildcard $(SRC_DIR)/*.c)
+OBJECTS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SOURCES))
+HEADERS = $(wildcard $(INCLUDE_DIR)/*.h)
 
-# Headers (para dependências)
-HEADERS = cpu.h ram.h instruction.h opcodes.h
-
-# Regra padrão (compila tudo)
 all: $(TARGET)
 
-# Regra para criar o executável
 $(TARGET): $(OBJECTS)
-	$(CC) -Wall -Wextra $(OBJECTS) -o $(TARGET) $(LDFLAGS)
+	@mkdir -p $(dir $@)
+	$(CC) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
 	@echo "✓ Compilação concluída: $(TARGET)"
 
-# Regra para compilar arquivos .c em .o
-%.o: %.c $(HEADERS)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS)
+	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Limpar arquivos compilados
 clean:
-	rm -f $(OBJECTS) $(TARGET)
-	@echo "✓ Arquivos de compilação removidos"
+	rm -rf $(BUILD_DIR) bin
+	@echo "✓ Limpeza concluída"
 
-# Limpar e recompilar tudo
-rebuild: clean all
+re: clean all
 
-# Executar o programa após compilar
 run: $(TARGET)
 	./$(TARGET)
 
-# Mostrar informações de debug
-debug: CFLAGS += -DDEBUG
-debug: rebuild
-
-# Versão otimizada (release)
-release: CFLAGS = -Wall -O3 -std=c11
-release: rebuild
-
-# Declarar targets que não são arquivos
-.PHONY: all clean rebuild run debug release
+. PHONY: all clean rebuild run

@@ -1,13 +1,13 @@
-#include "program.h"
+#include "include/program.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
-#include "cpu.h"
-#include "instruction.h"
-#include "opcodes.h"
-#include "ram.h"
+#include "include/cpu.h"
+#include "include/instruction.h"
+#include "include/opcodes.h"
+#include "include/ram.h"
 
 #define MEMORY_SIZE 100
 

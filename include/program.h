@@ -1,8 +1,8 @@
 #ifndef PROGRAM_H
 #define PROGRAM_H
 
-#include "instruction.h"
-#include "ram.h"
+#include "include/instruction.h"
+#include "include/ram.h"
 
 void program_mult(RAM* ram, Register* reg, int multiplicand, int multiplier);
 void program_div(RAM* ram, Register* reg, int dividend, int divisor);

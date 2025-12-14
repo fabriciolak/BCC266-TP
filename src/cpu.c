@@ -2,9 +2,9 @@
 
 #include <stdio.h>
 
-#include "instruction.h"
-#include "opcodes.h"
-#include "ram.h"
+#include "include/instruction.h"
+#include "include/opcodes.h"
+#include "include/ram.h"
 
 /*
   PC: Controla o endereço da instrução atual, controlando o fluxo do programa.
