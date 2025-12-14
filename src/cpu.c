@@ -1,4 +1,4 @@
-#include "cpu.h"
+#include "include/cpu.h"
 
 #include <stdio.h>
 
@@ -18,135 +18,135 @@
 // segue o principio de: fetch-decode-execute
 // Instruction memory[MEMORY_SIZE];
 
-void execute_cpu(Register* reg, RAM* ram, Instruction* memory) {
+void execute_cpu(Register *reg, RAM *ram, Instruction *memory) {
   // encontra a instrução da memoria usando PC
   Instruction inst = memory[reg->PC];
   reg->IR = inst.opcode;
 
   switch (reg->IR) {
-    case HALT:
-      puts("program endeed");
-      break;
-    case ADD:
-      reg->R1 = get_ram(ram, inst.optr1);
-      reg->R2 = get_ram(ram, inst.optr2);
+  case HALT:
+    puts("program endeed");
+    break;
+  case ADD:
+    reg->R1 = get_ram(ram, inst.optr1);
+    reg->R2 = get_ram(ram, inst.optr2);
 
-      reg->AC = reg->R1 + reg->R2;
+    reg->AC = reg->R1 + reg->R2;
 
-      set_ram(ram, inst.optr3, reg->AC);
+    set_ram(ram, inst.optr3, reg->AC);
 
-      break;
-    case SUB:
-      reg->R1 = get_ram(ram, inst.optr1);
-      reg->R2 = get_ram(ram, inst.optr2);
+    break;
+  case SUB:
+    reg->R1 = get_ram(ram, inst.optr1);
+    reg->R2 = get_ram(ram, inst.optr2);
 
-      reg->AC = reg->R1 - reg->R2;
-      set_ram(ram, inst.optr3, reg->AC);
+    reg->AC = reg->R1 - reg->R2;
+    set_ram(ram, inst.optr3, reg->AC);
 
-      break;
-    case MUL:
-      reg->R1 = get_ram(ram, inst.optr1);
-      reg->R2 = get_ram(ram, inst.optr2);
+    break;
+  case MUL:
+    reg->R1 = get_ram(ram, inst.optr1);
+    reg->R2 = get_ram(ram, inst.optr2);
 
-      reg->AC = reg->R1 * reg->R2;
-      set_ram(ram, inst.optr3, reg->AC);
+    reg->AC = reg->R1 * reg->R2;
+    set_ram(ram, inst.optr3, reg->AC);
 
-      break;
-    case DIV:
-      reg->R1 = get_ram(ram, inst.optr1);
-      reg->R2 = get_ram(ram, inst.optr2);
+    break;
+  case DIV:
+    reg->R1 = get_ram(ram, inst.optr1);
+    reg->R2 = get_ram(ram, inst.optr2);
 
-      if (reg->R2 == 0) {
-        puts("Error: couldn't divide by zero");
-        reg->AC = 0;
-        return;
-      }
-
-      reg->AC = reg->R1 / reg->R2;
-      set_ram(ram, inst.optr3, reg->AC);
-
-      break;
-    // carrega um valor do registrador diretamente na ram
-    // (optr1 = reg, optr2 = endereço)
-    case COPY_REG_RAM: {
-      int which_reg = inst.optr1;  // 1=R1, 2=R2
-      int address = inst.optr2;
-
-      if (which_reg == 1) {
-        set_ram(ram, address, reg->R1);
-      } else if (which_reg == 2) {
-        set_ram(ram, address, reg->R2);
-      }
-
-      break;
+    if (reg->R2 == 0) {
+      puts("Error: couldn't divide by zero");
+      reg->AC = 0;
+      return;
     }
 
-    case COPY_RAM_REG: {
-      int which_reg = inst.optr1;
-      int address = inst.optr2;
+    reg->AC = reg->R1 / reg->R2;
+    set_ram(ram, inst.optr3, reg->AC);
 
-      if (which_reg == 1) {
-        reg->R1 = get_ram(ram, address);
-      } else if (which_reg == 2) {
-        reg->R2 = get_ram(ram, address);
-      }
+    break;
+  // carrega um valor do registrador diretamente na ram
+  // (optr1 = reg, optr2 = endereço)
+  case COPY_REG_RAM: {
+    int which_reg = inst.optr1; // 1=R1, 2=R2
+    int address = inst.optr2;
 
-      break;
+    if (which_reg == 1) {
+      set_ram(ram, address, reg->R1);
+    } else if (which_reg == 2) {
+      set_ram(ram, address, reg->R2);
     }
-    // carrega um valor direto no registrador
-    // (optr1 = 1 ou 2, optr2 = valor)
-    case COPY_EXT_REG: {
-      int which_reg = inst.optr1;
-      int value = inst.optr2;
 
-      if (which_reg == 1) {
-        reg->R1 = value;
-      } else if (which_reg == 2) {
-        reg->R2 = value;
-      }
+    break;
+  }
 
-      break;
-    }
-    case OBTAIN_REG: {
-      int which_reg = inst.optr1;
-      int address = inst.optr2;
+  case COPY_RAM_REG: {
+    int which_reg = inst.optr1;
+    int address = inst.optr2;
 
-      if (which_reg == 1) {
-        set_ram(ram, address, reg->R1);
-      } else if (which_reg == 2) {
-        set_ram(ram, address, reg->R2);
-      }
+    if (which_reg == 1) {
+      reg->R1 = get_ram(ram, address);
+    } else if (which_reg == 2) {
+      reg->R2 = get_ram(ram, address);
+    }
 
-      break;
+    break;
+  }
+  // carrega um valor direto no registrador
+  // (optr1 = 1 ou 2, optr2 = valor)
+  case COPY_EXT_REG: {
+    int which_reg = inst.optr1;
+    int value = inst.optr2;
+
+    if (which_reg == 1) {
+      reg->R1 = value;
+    } else if (which_reg == 2) {
+      reg->R2 = value;
     }
-    case JUMP: {
-      reg->PC = inst.optr1 - 1;  // será incrementado no final
-      break;
+
+    break;
+  }
+  case OBTAIN_REG: {
+    int which_reg = inst.optr1;
+    int address = inst.optr2;
+
+    if (which_reg == 1) {
+      set_ram(ram, address, reg->R1);
+    } else if (which_reg == 2) {
+      set_ram(ram, address, reg->R2);
     }
-    case JZ: {  // Jump if zero
-      if (reg->AC == 0) {
-        reg->PC = inst.optr1 - 1;
-      }
-      break;
+
+    break;
+  }
+  case JUMP: {
+    reg->PC = inst.optr1 - 1; // será incrementado no final
+    break;
+  }
+  case JZ: { // Jump if zero
+    if (reg->AC == 0) {
+      reg->PC = inst.optr1 - 1;
     }
-    case JNZ: {  // Jump if not zero
-      if (reg->AC != 0) {
-        reg->PC = inst.optr1 - 1;
-      }
-      break;
+    break;
+  }
+  case JNZ: { // Jump if not zero
+    if (reg->AC != 0) {
+      reg->PC = inst.optr1 - 1;
     }
-    case JGT: {
-      if (reg->AC > 0) {
-        reg->PC = inst.optr1 - 1;
-      }
-      break;
+    break;
+  }
+  case JGT: {
+    if (reg->AC > 0) {
+      reg->PC = inst.optr1 - 1;
     }
-    case JLT: {
-      if (reg->AC < 0) {
-        reg->PC = inst.optr1 - 1;
-      }
-      break;
+    break;
+  }
+  case JLT: {
+    if (reg->AC < 0) {
+      reg->PC = inst.optr1 - 1;
     }
+    break;
+  }
   }
 
   // increment PC

@@ -1,1 +1,2 @@
-build/\nbin/\n*. o\n*.exe
+build/
+bin/
