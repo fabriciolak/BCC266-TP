@@ -3,15 +3,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifndef L1_SIZE
+#define L1_SIZE 32
+#endif
+
+#ifndef L2_SIZE
+#define L2_SIZE 64
+#endif
+
+#ifndef L3_SIZE
+#define L3_SIZE 128
+#endif
+
 UCM* ucm_create(RAM* ram) {
   if (ram == NULL) return NULL;
 
   UCM* ucm = (UCM*)malloc(sizeof(UCM));
   if (ucm == NULL) return NULL;
 
-  ucm->L1 = cache_create(2, 1);
-  ucm->L2 = cache_create(4, 10);
-  ucm->L3 = cache_create(8, 50);
+  ucm->L1 = cache_create(L1_SIZE, 1);
+  ucm->L2 = cache_create(L2_SIZE, 10);
+  ucm->L3 = cache_create(L3_SIZE, 50);
 
   // Check if all caches were created successfully
   if (ucm->L1 == NULL || ucm->L2 == NULL || ucm->L3 == NULL) {

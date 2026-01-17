@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c11 -g -Iinclude -I.
+CFLAGS ?= -Wall -Wextra -std=c11 -g -Iinclude -I. 
 LDFLAGS =
 
 TARGET = bin/exe
@@ -16,7 +16,7 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS)
 	@mkdir -p $(dir $@)
 	$(CC) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
-	@echo "✓ Compilação concluída: $(TARGET)"
+	@echo "✓ Compilação concluída:  $(TARGET)"
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS)
 	@mkdir -p $(BUILD_DIR)
@@ -31,4 +31,4 @@ re: clean all
 run: $(TARGET)
 	./$(TARGET)
 
-. PHONY: all clean rebuild run
+.PHONY: all clean rebuild run
