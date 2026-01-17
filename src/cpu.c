@@ -4,7 +4,7 @@
 
 #include "include/instruction.h"
 #include "include/opcodes.h"
-#include "include/ram.h"
+#include "include/ucm.h"
 
 /*
   PC: Controla o endereço da instrução atual, controlando o fluxo do programa.
@@ -15,46 +15,55 @@
   AC: Mantém os resultados das operações e funciona como registrador principal
 */
 
-// segue o principio de: fetch-decode-execute
-// Instruction memory[MEMORY_SIZE];
+// segue o principio de:  fetch-decode-execute
 
-void execute_cpu(Register *reg, RAM *ram, Instruction *memory) {
+void execute_cpu(Register *reg, UCM *ucm, Instruction *memory) {
   // encontra a instrução da memoria usando PC
   Instruction inst = memory[reg->PC];
   reg->IR = inst.opcode;
 
   switch (reg->IR) {
-  case HALT:
+  case HALT: 
     puts("program endeed");
     break;
+
   case ADD:
-    reg->R1 = get_ram(ram, inst.optr1);
-    reg->R2 = get_ram(ram, inst.optr2);
+    // Read operands through UCM
+    reg->R1 = ucm_access(ucm, inst.optr1, UCM_READ, 0);
+    reg->R2 = ucm_access(ucm, inst.optr2, UCM_READ, 0);
 
     reg->AC = reg->R1 + reg->R2;
 
-    set_ram(ram, inst.optr3, reg->AC);
-
+    // Write result through UCM
+    ucm_access(ucm, inst.optr3, UCM_WRITE, reg->AC);
     break;
+
   case SUB:
-    reg->R1 = get_ram(ram, inst.optr1);
-    reg->R2 = get_ram(ram, inst.optr2);
+    // Read operands through UCM
+    reg->R1 = ucm_access(ucm, inst.optr1, UCM_READ, 0);
+    reg->R2 = ucm_access(ucm, inst.optr2, UCM_READ, 0);
 
     reg->AC = reg->R1 - reg->R2;
-    set_ram(ram, inst.optr3, reg->AC);
 
+    // Write result through UCM
+    ucm_access(ucm, inst.optr3, UCM_WRITE, reg->AC);
     break;
+
   case MUL:
-    reg->R1 = get_ram(ram, inst.optr1);
-    reg->R2 = get_ram(ram, inst.optr2);
+    // Read operands through UCM
+    reg->R1 = ucm_access(ucm, inst.optr1, UCM_READ, 0);
+    reg->R2 = ucm_access(ucm, inst.optr2, UCM_READ, 0);
 
     reg->AC = reg->R1 * reg->R2;
-    set_ram(ram, inst.optr3, reg->AC);
 
+    // Write result through UCM
+    ucm_access(ucm, inst.optr3, UCM_WRITE, reg->AC);
     break;
+
   case DIV:
-    reg->R1 = get_ram(ram, inst.optr1);
-    reg->R2 = get_ram(ram, inst.optr2);
+    // Read operands through UCM
+    reg->R1 = ucm_access(ucm, inst.optr1, UCM_READ, 0);
+    reg->R2 = ucm_access(ucm, inst.optr2, UCM_READ, 0);
 
     if (reg->R2 == 0) {
       puts("Error: couldn't divide by zero");
@@ -63,19 +72,21 @@ void execute_cpu(Register *reg, RAM *ram, Instruction *memory) {
     }
 
     reg->AC = reg->R1 / reg->R2;
-    set_ram(ram, inst.optr3, reg->AC);
 
+    // Write result through UCM
+    ucm_access(ucm, inst.optr3, UCM_WRITE, reg->AC);
     break;
+
   // carrega um valor do registrador diretamente na ram
   // (optr1 = reg, optr2 = endereço)
-  case COPY_REG_RAM: {
-    int which_reg = inst.optr1; // 1=R1, 2=R2
+  case COPY_REG_RAM:  {
+    int which_reg = inst.optr1;
     int address = inst.optr2;
 
     if (which_reg == 1) {
-      set_ram(ram, address, reg->R1);
+      ucm_access(ucm, address, UCM_WRITE, reg->R1);
     } else if (which_reg == 2) {
-      set_ram(ram, address, reg->R2);
+      ucm_access(ucm, address, UCM_WRITE, reg->R2);
     }
 
     break;
@@ -86,17 +97,18 @@ void execute_cpu(Register *reg, RAM *ram, Instruction *memory) {
     int address = inst.optr2;
 
     if (which_reg == 1) {
-      reg->R1 = get_ram(ram, address);
+      reg->R1 = ucm_access(ucm, address, UCM_READ, 0);
     } else if (which_reg == 2) {
-      reg->R2 = get_ram(ram, address);
+      reg->R2 = ucm_access(ucm, address, UCM_READ, 0);
     }
 
     break;
   }
+
   // carrega um valor direto no registrador
   // (optr1 = 1 ou 2, optr2 = valor)
   case COPY_EXT_REG: {
-    int which_reg = inst.optr1;
+    int which_reg = inst. optr1;
     int value = inst.optr2;
 
     if (which_reg == 1) {
@@ -107,41 +119,47 @@ void execute_cpu(Register *reg, RAM *ram, Instruction *memory) {
 
     break;
   }
-  case OBTAIN_REG: {
+
+  case OBTAIN_REG:  {
     int which_reg = inst.optr1;
     int address = inst.optr2;
 
     if (which_reg == 1) {
-      set_ram(ram, address, reg->R1);
+      ucm_access(ucm, address, UCM_WRITE, reg->R1);
     } else if (which_reg == 2) {
-      set_ram(ram, address, reg->R2);
+      ucm_access(ucm, address, UCM_WRITE, reg->R2);
     }
 
     break;
   }
+
   case JUMP: {
     reg->PC = inst.optr1 - 1; // será incrementado no final
     break;
   }
+
   case JZ: { // Jump if zero
     if (reg->AC == 0) {
       reg->PC = inst.optr1 - 1;
     }
     break;
   }
+
   case JNZ: { // Jump if not zero
     if (reg->AC != 0) {
       reg->PC = inst.optr1 - 1;
     }
     break;
   }
+
   case JGT: {
     if (reg->AC > 0) {
       reg->PC = inst.optr1 - 1;
     }
     break;
   }
-  case JLT: {
+
+  case JLT:  {
     if (reg->AC < 0) {
       reg->PC = inst.optr1 - 1;
     }

@@ -8,12 +8,13 @@
 #include "include/instruction.h"
 #include "include/opcodes.h"
 #include "include/ram.h"
+#include "include/ucm.h"
 
 #define MEMORY_SIZE 100
 
 /*
 sempre reiniciar os registradores
-usar uma variavel de controle para quando começar o bloco de instructions.
+usar uma variavel de controle para quando começar o bloco de instructions. 
 (principalmente quando usar algum recurso de JUMP)
 
 sempre fazer o reset do estado da CPU antes de executar (AC, IR, PC, R1, R2)
@@ -23,23 +24,23 @@ void program_mult(RAM *ram, Register *reg, int multiplicand, int multiplier) {
   Instruction inst[MEMORY_SIZE] = {0};
   int pc = 0;
 
-  // set_ram(ram, 0, 0);  // resultado
+  // RAM[0] = 0 (resultado)
   inst[pc++] = (Instruction){COPY_EXT_REG, 1, 0, 0};
   inst[pc++] = (Instruction){COPY_REG_RAM, 1, 0, 0};
 
-  // set_ram(ram, 1, multiplicand);  // multiplicando
+  // RAM[1] = multiplicand
   inst[pc++] = (Instruction){COPY_EXT_REG, 1, multiplicand, 0};
   inst[pc++] = (Instruction){COPY_REG_RAM, 1, 1, 0};
 
-  // set_ram(ram, 2, 0);             // contador = 0
+  // RAM[2] = 0 (contador)
   inst[pc++] = (Instruction){COPY_EXT_REG, 1, 0, 0};
   inst[pc++] = (Instruction){COPY_REG_RAM, 1, 2, 0};
 
-  // set_ram(ram, 3, multiplier);    // multiplier
+  // RAM[3] = multiplier
   inst[pc++] = (Instruction){COPY_EXT_REG, 1, multiplier, 0};
   inst[pc++] = (Instruction){COPY_REG_RAM, 1, 3, 0};
 
-  // set_ram(ram, 4, 1);             // constante
+  // RAM[4] = 1 (constante)
   inst[pc++] = (Instruction){COPY_EXT_REG, 1, 1, 0};
   inst[pc++] = (Instruction){COPY_REG_RAM, 1, 4, 0};
 
@@ -57,9 +58,19 @@ void program_mult(RAM *ram, Register *reg, int multiplicand, int multiplier) {
   reg->R1 = 0;
   reg->R2 = 0;
 
+  // CREATE UCM
+  UCM* ucm = ucm_create(ram);
+
   while (reg->IR != HALT && reg->PC < MEMORY_SIZE) {
-    execute_cpu(reg, ram, inst);
+    execute_cpu(reg, ucm, inst);  // ← PASS UCM! 
   }
+
+  // Print statistics
+  printf("\n=== PROGRAM MULT STATISTICS ===\n");
+  ucm_print_stats(ucm);
+
+  // Cleanup
+  ucm_destroy(ucm);
 }
 
 void program_fibonacci(RAM *ram, Register *reg, int term) {
@@ -77,8 +88,6 @@ void program_fibonacci(RAM *ram, Register *reg, int term) {
   inst[pc++] = (Instruction){COPY_REG_RAM, 1, 3, 0};    // RAM[3] = R1
 
   // LOOP START (instrução 8)
-  // guarda o índice da instrução onde o bloco do loop começa
-  // para não colocar de modo hardcoded o destino do JUMP
   int loop_start = pc;
 
   inst[pc++] = (Instruction){ADD, 0, 1, 4}; // proximo = anterior + atual
@@ -88,13 +97,28 @@ void program_fibonacci(RAM *ram, Register *reg, int term) {
   inst[pc++] = (Instruction){COPY_REG_RAM, 2, 1, 0}; // RAM[1] = R2 (atual)
   inst[pc++] = (Instruction){SUB, 2, 3, 2};          // contador--
 
-  inst[pc++] = (Instruction){JGT, loop_start, 0,
-                             0}; // se contador > 0, volta pro loop_start
+  inst[pc++] = (Instruction){JGT, loop_start, 0, 0}; // se contador > 0, volta
   inst[pc++] = (Instruction){HALT, 0, 0, 0};
 
+  reg->AC = 0;
+  reg->IR = 0;
+  reg->PC = 0;
+  reg->R1 = 0;
+  reg->R2 = 0;
+
+  // CREATE UCM
+  UCM* ucm = ucm_create(ram);
+
   while (reg->IR != HALT && reg->PC < MEMORY_SIZE) {
-    execute_cpu(reg, ram, inst);
+    execute_cpu(reg, ucm, inst);  // ← PASS UCM! 
   }
+
+  // Print statistics
+  printf("\n=== PROGRAM FIBONACCI STATISTICS ===\n");
+  ucm_print_stats(ucm);
+
+  // Cleanup
+  ucm_destroy(ucm);
 }
 
 void program_sum_matrix(RAM *ram, Register *reg, int size) {
@@ -105,6 +129,8 @@ void program_sum_matrix(RAM *ram, Register *reg, int size) {
 
   srand(time(NULL));
 
+  // Pre-load matrices (acceptable for test setup)
+  // In real scenario, this would also be done via instructions
   for (int i = 0; i < n_elements; i++) {
     set_ram(ram, i, rand() % 100);
     set_ram(ram, delta + i, rand() % 100);
@@ -112,16 +138,27 @@ void program_sum_matrix(RAM *ram, Register *reg, int size) {
 
   int pc = 0;
 
+  // Generate addition instructions
   for (int i = 0; i < n_elements; i++) {
     inst[pc++] = (Instruction){ADD, i, delta + i, 2 * delta + i};
   }
 
   inst[pc++] = (Instruction){HALT, 0, 0, 0};
 
+  reg->AC = 0;
+  reg->IR = 0;
+  reg->PC = 0;
+  reg->R1 = 0;
+  reg->R2 = 0;
+
+  // CREATE UCM
+  UCM* ucm = ucm_create(ram);
+
   while (reg->IR != HALT && reg->PC < MEMORY_SIZE) {
-    execute_cpu(reg, ram, inst);
+    execute_cpu(reg, ucm, inst);  // ← PASS UCM!
   }
 
+  // Print matrices
   printf("Matriz A\n");
   for (int i = 0; i < size; i++) {
     for (int j = 0; j < size; j++) {
@@ -138,66 +175,123 @@ void program_sum_matrix(RAM *ram, Register *reg, int size) {
     printf("\n");
   }
   printf("\n");
+
+  // Print statistics
+  printf("\n=== PROGRAM SUM MATRIX STATISTICS ===\n");
+  ucm_print_stats(ucm);
+
+  // Cleanup
+  ucm_destroy(ucm);
 }
 
 void program_div(RAM *ram, Register *reg, int dividend, int divisor) {
   Instruction inst[MEMORY_SIZE] = {0};
-
-  set_ram(ram, 0, dividend);
-  set_ram(ram, 1, divisor);
-  set_ram(ram, 2, 1);
-  set_ram(ram, 3, 0); // result
-
   int pc = 0;
 
-  inst[pc++] = (Instruction){ADD, 3, 2, 3};
-  inst[pc++] = (Instruction){SUB, 0, 1, 0};
-  inst[pc++] = (Instruction){JGT, 0, 0, 0};
+  // Initialize RAM via instructions (CORRECT WAY)
+  
+  // RAM[0] = dividend
+  inst[pc++] = (Instruction){COPY_EXT_REG, 1, dividend, 0};  // R1 = dividend
+  inst[pc++] = (Instruction){COPY_REG_RAM, 1, 0, 0};         // RAM[0] = R1
+
+  // RAM[1] = divisor
+  inst[pc++] = (Instruction){COPY_EXT_REG, 1, divisor, 0};   // R1 = divisor
+  inst[pc++] = (Instruction){COPY_REG_RAM, 1, 1, 0};         // RAM[1] = R1
+
+  // RAM[2] = 1
+  inst[pc++] = (Instruction){COPY_EXT_REG, 1, 1, 0};         // R1 = 1
+  inst[pc++] = (Instruction){COPY_REG_RAM, 1, 2, 0};         // RAM[2] = R1
+
+  // RAM[3] = 0 (result)
+  inst[pc++] = (Instruction){COPY_EXT_REG, 1, 0, 0};         // R1 = 0
+  inst[pc++] = (Instruction){COPY_REG_RAM, 1, 3, 0};         // RAM[3] = R1
+
+  // Division algorithm starts at instruction 8
+  int loop_start = pc;
+
+  inst[pc++] = (Instruction){ADD, 3, 2, 3};      // result++
+  inst[pc++] = (Instruction){SUB, 0, 1, 0};      // dividend -= divisor
+  inst[pc++] = (Instruction){JGT, loop_start, 0, 0};  // if dividend > 0, loop
   inst[pc++] = (Instruction){HALT, 0, 0, 0};
 
-  // reg->PC = 0;
-
-  while (reg->IR != HALT && reg->PC < MEMORY_SIZE) {
-    execute_cpu(reg, ram, inst);
-  }
-}
-
-// n (n × (n-1) × (n-2) × ... × 2 × 1).
-void program_fat(RAM *ram, Register *reg, int n) {
-  Instruction inst[MEMORY_SIZE] = {0};
-
-  set_ram(ram, 0, 1); // RAM[0]: resultado acumulado (começa em 1)
-  set_ram(ram, 1, n); // RAM[1]: contador (começa em n)
-  set_ram(ram, 2, 1); // RAM[2]: constante 1
-
-  int pc = 0;
-  inst[pc++] =
-      (Instruction){SUB, 1, 2, 5}; // RAM[5] (ou RAM lixo), AC = RAM[1] - RAM[2]
-  inst[pc++] =
-      (Instruction){JLT, 5, 0, 5}; // Se AC < 0, salta pra HALT (linha 5)
-  inst[pc++] = (Instruction){MUL, 0, 1, 0};  // resultado *= contador
-  inst[pc++] = (Instruction){SUB, 1, 2, 1};  // contador -= 1
-  inst[pc++] = (Instruction){JUMP, 0, 0, 0}; // volta para o início
-  inst[pc++] = (Instruction){HALT, 0, 0, 0}; // fim
-
-  reg->PC = 0;
+  reg->AC = 0;
   reg->IR = 0;
   reg->PC = 0;
   reg->R1 = 0;
   reg->R2 = 0;
 
+  // CREATE UCM
+  UCM* ucm = ucm_create(ram);
+
   while (reg->IR != HALT && reg->PC < MEMORY_SIZE) {
-    execute_cpu(reg, ram, inst);
+    execute_cpu(reg, ucm, inst);  // ← PASS UCM!
+  }
+
+  // Print statistics
+  printf("\n=== PROGRAM DIV STATISTICS ===\n");
+  ucm_print_stats(ucm);
+
+  // Cleanup
+  ucm_destroy(ucm);
+}
+
+// n (n × (n-1) × (n-2) × ... × 2 × 1).
+void program_fat(RAM *ram, Register *reg, int n) {
+  Instruction inst[MEMORY_SIZE] = {0};
+  int pc = 0;
+
+  // Initialize RAM via instructions (CORRECT WAY)
+  
+  // RAM[0] = 1 (resultado acumulado)
+  inst[pc++] = (Instruction){COPY_EXT_REG, 1, 1, 0};   // R1 = 1
+  inst[pc++] = (Instruction){COPY_REG_RAM, 1, 0, 0};   // RAM[0] = R1
+
+  // RAM[1] = n (contador)
+  inst[pc++] = (Instruction){COPY_EXT_REG, 1, n, 0};   // R1 = n
+  inst[pc++] = (Instruction){COPY_REG_RAM, 1, 1, 0};   // RAM[1] = R1
+
+  // RAM[2] = 1 (constante)
+  inst[pc++] = (Instruction){COPY_EXT_REG, 1, 1, 0};   // R1 = 1
+  inst[pc++] = (Instruction){COPY_REG_RAM, 1, 2, 0};   // RAM[2] = R1
+
+  // Factorial algorithm starts at instruction 6
+  int loop_start = pc;
+
+  inst[pc++] = (Instruction){SUB, 1, 2, 5};       // AC = RAM[1] - RAM[2]
+  inst[pc++] = (Instruction){JLT, pc + 4, 0, 0};  // If AC < 0, jump to HALT
+  inst[pc++] = (Instruction){MUL, 0, 1, 0};       // result *= counter
+  inst[pc++] = (Instruction){SUB, 1, 2, 1};       // counter -= 1
+  inst[pc++] = (Instruction){JUMP, loop_start, 0, 0};  // Jump back to loop
+  inst[pc++] = (Instruction){HALT, 0, 0, 0};      // End
+
+  reg->AC = 0;
+  reg->IR = 0;
+  reg->PC = 0;
+  reg->R1 = 0;
+  reg->R2 = 0;
+
+  // CREATE UCM
+  UCM* ucm = ucm_create(ram);
+
+  while (reg->IR != HALT && reg->PC < MEMORY_SIZE) {
+    execute_cpu(reg, ucm, inst);  // ← PASS UCM! 
   }
 
   printf("Fatorial de %d = %d\n", n, get_ram(ram, 0));
+
+  // Print statistics
+  printf("\n=== PROGRAM FAT STATISTICS ===\n");
+  ucm_print_stats(ucm);
+
+  // Cleanup
+  ucm_destroy(ucm);
 }
 
 int main(void) {
   Register reg = {0, 0, 0, 0, 0};
   RAM *ram = create_empty_ram(MEMORY_SIZE);
 
-  // PROGRAM: 1
+  // PROGRAM:  1
   program_mult(ram, &reg, 10, 10);
   printf("Resultado = %d\n", get_ram(ram, 0));
 
@@ -214,14 +308,7 @@ int main(void) {
 
   // PROGRAM: 5
   // program_fat(ram, &reg, 10);
-  // printf("Resultado = %d\n", get_ram(ram, 2));
 
   destroy_ram(ram);
   return 0;
 }
-
-/*
-  não manipular a RAM diretamente com o set_ram nos programas
-
-
-*/

@@ -3,7 +3,8 @@
 
 #include "ram.h"
 #include "instruction.h"
+#include "ucm.h"  // ← ADD THIS
 
-void execute_cpu(Register* reg, RAM* ram, Instruction* memory);
+void execute_cpu(Register* reg, UCM* ucm, Instruction* memory);  // ← CHANGED
 
 #endif
